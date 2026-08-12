@@ -1,11 +1,13 @@
 //Wrapper function
 
 //In case of Promise
-const asyncHanlder=(requestHandler)=>{
-    (req,res,next)=>{
-        Promise.resolve(requestHandler(req,res,next)).catch((error)=>next)
-    }
-}
+const asyncHandler = (requestHandler) => {
+  return (req, res, next) => {
+    Promise
+      .resolve(requestHandler(req, res, next))
+      .catch((error) => next(error));
+  };
+};
 
 
 //This for async/await
