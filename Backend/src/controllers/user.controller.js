@@ -1,6 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js"
 import ApiError from "../utils/ApiError.js"
-import {User} from "../models/user.model.js"
+import {userModel} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 
@@ -25,7 +25,7 @@ const registerUser = asyncHandler(async(req,res)=>{
     const existingUser=User.findOne({
         $or:[{email},{username}]
     })
-    
+
     if(existingUser) throw new ApiError(409,"User with email or username already exists")
 
     //These two are coming from user route's multer middleware
