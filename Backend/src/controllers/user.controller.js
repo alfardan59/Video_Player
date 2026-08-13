@@ -22,15 +22,17 @@ const registerUser = asyncHandler(async(req,res)=>{
        throw new ApiError(400,"All fields are required")
     }
 
-    const existingUser=User.findOne({
+    const existingUser=await userModel.findOne({
         $or:[{email},{username}]
     })
 
-    if(existingUser) throw new ApiError(409,"User with email or username already exists")
+    if(existingUser){ 
+        throw new ApiError(409,"User with email or username already exists")
+    }
 
     //These two are coming from user route's multer middleware
     const avatarLocalPath=req.files?.avatar[0]?.path;
-    const coverImageLocalPath=req.files?.coverImage?.path;
+    const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required");
@@ -48,7 +50,7 @@ const registerUser = asyncHandler(async(req,res)=>{
 
     //Entry in database
 
-    const user = await User.create({
+    const user = await userModel.create({
         fullName,
         avatar:avatar.url, //sends only the url
         coverImage:coverImage?.url || "",
@@ -56,7 +58,7 @@ const registerUser = asyncHandler(async(req,res)=>{
         password,
         username:username.toLowerCase()
     })
-    const createdUser = await User.findById(user._id).select(
+    const createdUser = await userModel.findById(user._id).select(
         "-password -refreshToken" //this removes the password and refreshToken
     )
 
