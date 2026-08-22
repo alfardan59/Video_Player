@@ -54,7 +54,8 @@ const registerUser = asyncHandler(async(req,res)=>{
     if(req.files && Array.isArray(req.files.coverImage)&& req.files.coverImage.length>0){
         coverImageLocalPath=req.files.coverImage[0].path
     }
-
+    // console.log("FILES RECEIVED:", req.files);
+    // console.log("BODY RECEIVED:", req.body);
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar file is required");
     }
@@ -89,6 +90,7 @@ const registerUser = asyncHandler(async(req,res)=>{
     return res.status(201).json(
         new ApiResponse(200,createdUser, "User registered successfully")
     )
+    
 
 })
 
@@ -102,27 +104,28 @@ const loginUser=asyncHandler(async(req,res)=>{
 
     const {email, username, password}=req.body
 
-    if (!username || !email) {
-        throw new ApiError(400, "Username or email is required")
+    if (!username && !email) {
+        throw new ApiError(400, "Username or email is required");
     }
 
     const user = await userModel.findOne({
-        $or:[{username},{email}]
-    })
+        $or: [{ username }, { email }]
+    }).select("+password"); // 👈 Explicitly include password if schema hides it
 
-    if(!user){
-        throw new ApiError(404, "User does not exist")
+    if (!user) {
+        throw new ApiError(404, "User does not exist");
     }
 
-    const isPasswordValid = await user.isPasswordCorrect(password)
+    const isPasswordValid = await user.isPasswordCorrect(password);
 
-    if (isPasswordValid) {
-        throw new ApiError(401, "Invalid user credentials")
+    // MUST BE !isPasswordValid (if NOT valid, throw error)
+    if (!isPasswordValid) { 
+        throw new ApiError(401, "Invalid user credentials");
     }
 
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
 
-    const loggedInUser = userModel.findById(user._id).select("-password, -refreshToken")
+    const loggedInUser = await userModel.findById(user._id).select("-password, -refreshToken")
 
     const options = {
         httpOnly:true,
